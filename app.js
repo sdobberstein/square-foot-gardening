@@ -28,6 +28,44 @@ function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
 
 function plantById(id) { return PLANT_MAP[id] || null; }
 
+/* ── Companion helpers ── */
+
+// All 8 neighboring coordinate offsets
+const NEIGHBOR_OFFSETS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+// Only "forward" offsets so each pair is visited exactly once (used for warnings scan)
+const FORWARD_OFFSETS = [[0,1],[1,-1],[1,0],[1,1]];
+
+function getNeighborCompanionStatus(bed, row, col, plantId) {
+  const good = [], bad = [];
+  for (const [dr, dc] of NEIGHBOR_OFFSETS) {
+    const neighborId = bed.grid[`${row + dr},${col + dc}`];
+    if (!neighborId || neighborId === plantId) continue;
+    const rule = findCompanionRule(plantId, neighborId);
+    if (rule) (rule.type === 'good' ? good : bad).push(rule);
+  }
+  return { good, bad };
+}
+
+function computeWarnings() {
+  const warnings = [];
+  for (const bed of state.beds) {
+    for (const [key, plantId] of Object.entries(bed.grid)) {
+      if (!plantId) continue;
+      const [r, c] = key.split(',').map(Number);
+      for (const [dr, dc] of FORWARD_OFFSETS) {
+        const neighborId = bed.grid[`${r + dr},${c + dc}`];
+        if (!neighborId) continue;
+        const rule = findCompanionRule(plantId, neighborId);
+        if (rule && rule.type === 'bad') {
+          warnings.push({ bed, plantId, neighborId, rule });
+        }
+      }
+    }
+  }
+  return warnings;
+}
+
 /* ── Bed operations ── */
 function createBed(name, width = 4, height = 4) {
   return { id: uid(), name, width, height, grid: {} };
@@ -65,6 +103,37 @@ function computeTotals() {
 function render() {
   renderBeds();
   renderSummary();
+  renderWarnings();
+}
+
+function renderWarnings() {
+  const container = document.getElementById('warnings-container');
+  const warnings = computeWarnings();
+
+  if (warnings.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let rows = '';
+  for (const { bed, plantId, neighborId, rule } of warnings) {
+    const a = plantById(plantId);
+    const b = plantById(neighborId);
+    rows += `<div class="warning-row">
+      <span class="warning-bed">${escHtml(bed.name)}</span>
+      <span class="warning-plants">${a?.emoji || ''} ${a?.name || plantId} + ${b?.emoji || ''} ${b?.name || neighborId}</span>
+      <span class="warning-reason">— ${escHtml(rule.reason)}</span>
+    </div>`;
+  }
+
+  container.innerHTML = `
+    <section class="warnings-panel">
+      <div class="warnings-header">
+        <span>⚠</span>
+        <h2>Companion Conflicts (${warnings.length})</h2>
+      </div>
+      <div class="warnings-list">${rows}</div>
+    </section>`;
 }
 
 /* ── Sidebar plant list ── */
@@ -121,23 +190,19 @@ function makePlantItem(plant) {
 }
 
 function selectPlant(plantId) {
-  if (state.selectedPlant === plantId) {
-    state.selectedPlant = null;
-  } else {
-    state.selectedPlant = plantId;
-  }
-  // update eraser btn
-  document.getElementById('eraser-btn').classList.toggle('selected', state.selectedPlant === '__erase__');
-  // re-render sidebar selection state
+  state.selectedPlant = state.selectedPlant === plantId ? null : plantId;
+  document.getElementById('eraser-btn').classList.remove('selected');
   document.querySelectorAll('.plant-item').forEach(el => {
     el.classList.toggle('selected', el.dataset.plantId === state.selectedPlant);
   });
+  renderBeds(); // refresh companion highlighting
 }
 
 function selectEraser() {
   state.selectedPlant = state.selectedPlant === '__erase__' ? null : '__erase__';
   document.getElementById('eraser-btn').classList.toggle('selected', state.selectedPlant === '__erase__');
   document.querySelectorAll('.plant-item').forEach(el => el.classList.remove('selected'));
+  renderBeds(); // clear companion highlighting
 }
 
 /* ── Bed rendering ── */
@@ -221,17 +286,47 @@ function makeBedCard(bed) {
 }
 
 function makeBedGrid(bed) {
+  const previewPlant = (state.selectedPlant && state.selectedPlant !== '__erase__')
+    ? state.selectedPlant : null;
+
   let html = `<div class="garden-grid" style="grid-template-columns:repeat(${bed.width},var(--cell-size))" data-bed-id="${bed.id}">`;
   for (let r = 0; r < bed.height; r++) {
     for (let c = 0; c < bed.width; c++) {
       const key = `${r},${c}`;
       const plantId = bed.grid[key];
       const plant = plantId ? plantById(plantId) : null;
-      const occupied = !!plant;
-      html += `<div class="grid-cell${occupied ? ' occupied' : ''}"
-        data-bed-id="${bed.id}" data-row="${r}" data-col="${c}"
-        draggable="false"
-        title="${plant ? `${plant.name} (${plant.perSqFt}/sq ft) — click to change, right-click to clear` : 'Click to plant'}">`;
+
+      let classes = 'grid-cell';
+      let title = '';
+
+      if (plant) {
+        classes += ' occupied';
+        const { bad } = getNeighborCompanionStatus(bed, r, c, plantId);
+        if (bad.length > 0) {
+          classes += ' companion-conflict';
+          title = `⚠ ${bad.map(rule => {
+            const other = rule.plants.find(p => p !== plantId);
+            return `${plantById(other)?.name || other}: ${rule.reason}`;
+          }).join(' | ')}`;
+        } else {
+          title = `${plant.name} (${plant.perSqFt}/sq ft) — click to change, right-click to clear`;
+        }
+      } else if (previewPlant) {
+        const { good, bad } = getNeighborCompanionStatus(bed, r, c, previewPlant);
+        if (bad.length > 0) {
+          classes += ' companion-preview-bad';
+          title = `⚠ Bad companion: ${bad[0].reason}`;
+        } else if (good.length > 0) {
+          classes += ' companion-preview-good';
+          title = `✓ Good companion: ${good[0].reason}`;
+        } else {
+          title = 'Click to plant';
+        }
+      } else {
+        title = 'Click to plant';
+      }
+
+      html += `<div class="${classes}" data-bed-id="${bed.id}" data-row="${r}" data-col="${c}" draggable="false" title="${escHtml(title)}">`;
       if (plant) {
         html += `<span class="cell-emoji">${plant.emoji}</span>
                  <span class="cell-count">${plant.perSqFt}×</span>

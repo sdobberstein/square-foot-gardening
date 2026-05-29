@@ -347,6 +347,106 @@ body {
   box-shadow: 0 0 0 3px var(--green-light);
 }
 
+/* ── Companion highlighting ── */
+
+/* Empty cell: good companion nearby when a plant is selected */
+.grid-cell.companion-preview-good {
+  background: #eafbea;
+  border-color: var(--green-light);
+  box-shadow: inset 0 0 0 1px var(--green-light);
+}
+
+/* Empty cell: bad companion nearby when a plant is selected */
+.grid-cell.companion-preview-bad {
+  background: #fff4e0;
+  border-color: #e6a020;
+  box-shadow: inset 0 0 0 1px #e6a020;
+}
+
+/* Occupied cell: has a bad-companion neighbor */
+.grid-cell.companion-conflict {
+  border-color: #e6a020;
+  background: #fff8ee;
+}
+.grid-cell.companion-conflict::after {
+  content: '!';
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #e6a020;
+  line-height: 1;
+  background: #fff4e0;
+  border-radius: 50%;
+  width: 11px;
+  height: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Warnings panel ── */
+.warnings-panel {
+  background: #fffbf0;
+  border: 1px solid #f0c060;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.warnings-header {
+  padding: 10px 16px;
+  background: #fff4d6;
+  border-bottom: 1px solid #f0c060;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warnings-header h2 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a06000;
+  flex: 1;
+}
+
+.warnings-list {
+  padding: 4px 0;
+}
+
+.warning-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 16px;
+  border-bottom: 1px solid #f5e0a0;
+  font-size: 0.82rem;
+}
+.warning-row:last-child { border-bottom: none; }
+
+.warning-bed {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a06000;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.warning-plants {
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.warning-reason {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
 .grid-cell .cell-emoji { line-height: 1; }
 
 .grid-cell .cell-count {
