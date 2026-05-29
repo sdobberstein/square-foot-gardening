@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Square Foot Garden Planner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <h1>🌱 Square Foot Garden Planner</h1>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="new-btn" data-tip="New plan">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+        </svg>
+        New
+      </button>
+      <button class="btn btn-secondary" id="load-btn" data-tip="Load plan from file">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        Load
+      </button>
+      <button class="btn btn-accent" id="save-btn" data-tip="Save plan to file">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Save
+      </button>
+    </div>
+  </header>
+
+  <!-- App body -->
+  <div class="app-body">
+
+    <!-- Left sidebar: plant palette -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Plants</h2>
+        <input class="plant-search" id="plant-search" type="search" placeholder="Search plants…">
+      </div>
+      <div class="plant-list" id="plant-list"></div>
+      <button class="eraser-btn" id="eraser-btn">
+        <span style="font-size:1.1rem">🧹</span> Erase Mode
+      </button>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+
+      <!-- Beds section -->
+      <section class="beds-area">
+        <div class="beds-toolbar">
+          <h2>Garden Beds</h2>
+          <div class="quick-sizes" id="quick-sizes"></div>
+          <button class="btn btn-primary" id="add-bed-btn">＋ Custom Bed</button>
+        </div>
+
+        <div id="beds-container"></div>
+      </section>
+
+      <!-- Summary section -->
+      <section class="summary-panel">
+        <div class="summary-header">
+          <h2>Plant Summary</h2>
+          <span style="font-size:0.75rem;color:var(--text-muted)">
+            Target = how many squares you want to fill
+          </span>
+        </div>
+        <div class="summary-table-wrap">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Plant</th>
+                <th>Squares Used</th>
+                <th>Per Bed</th>
+                <th>Target Squares</th>
+                <th>Progress</th>
+              </tr>
+            </thead>
+            <tbody id="summary-tbody">
+              <tr>
+                <td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">
+                  No plants placed yet
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="plants.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
