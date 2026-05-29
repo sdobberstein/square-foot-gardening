@@ -20,12 +20,12 @@ A local, browser-based planning tool for square foot gardening. No server, no in
 ### Planting
 - **Click a plant** in the left sidebar to select it, then click any grid square to place it
 - **Drag and drop** a plant from the sidebar directly onto a square
-- **Click a square with no tool selected** to open a full plant picker
+- **Click a square with no tool selected** to open a full plant picker with search
 - **Right-click** any square to clear it
 - **Erase Mode** (🧹 in the sidebar) — click squares to remove plants one at a time
 
 ### Plant Library
-37 plants across 8 categories, each with the correct square foot gardening density:
+39 plants across 8 categories, each with the correct square foot gardening density:
 
 | Category | Examples |
 |----------|---------|
@@ -38,7 +38,26 @@ A local, browser-based planning tool for square foot gardening. No server, no in
 | Herb | Basil (4/sq), Chives (16/sq), Rosemary (1/sq) |
 | Flower | Sunflower (1/sq), Marigold (4/sq), Nasturtium (4/sq) |
 
-Use the search box at the top of the sidebar to filter by plant name or category.
+The sidebar and plant picker modal both have a search box — filter by plant name or category.
+
+### Companion Planting
+The app highlights companion relationships as you plan and flags conflicts after placement.
+
+**While selecting or dragging a plant**, empty grid squares are highlighted in real time:
+- **Green tint** — a good companion is already in an adjacent square
+- **Amber tint** — a bad companion is already in an adjacent square
+- Hover any highlighted square to see the specific reason
+
+**After placement**, squares with a bad-companion neighbor show an amber `!` badge. A **Companion Conflicts** panel appears below the beds listing every conflict — bed name, the two plants involved, and the reason — and disappears automatically once all conflicts are resolved.
+
+Companion rules are based on high-confidence, widely-agreed pairings only:
+
+| Type | Examples |
+|------|---------|
+| Good | Tomato + Basil, Carrot + Onion, Brassicas + Nasturtium, Cucumber + Marigold |
+| Bad | Alliums (onion/garlic/leek/chives) + Legumes (beans/peas), Brassicas + Tomato |
+
+Rules live in `companions.js` as a flat array with stable IDs, making them easy to extend.
 
 ### Plant Summary
 The summary table at the bottom tracks everything you've planted:
@@ -90,8 +109,9 @@ Grid keys are `"row,col"` (zero-indexed). Target values are in **squares** (not 
 ## Project Structure
 
 ```
-index.html   — layout and markup
-style.css    — all styles
-plants.js    — plant library (PLANTS array, PLANT_MAP, CATEGORIES)
-app.js       — application logic (state, rendering, drag/drop, save/load)
+index.html      — layout and markup
+style.css       — all styles
+plants.js       — plant library (PLANTS array, PLANT_MAP, CATEGORIES)
+companions.js   — companion planting rules (COMPANIONS array, findCompanionRule)
+app.js          — application logic (state, rendering, drag/drop, save/load)
 ```
