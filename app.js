@@ -427,7 +427,10 @@ function openPlantModal(bedId, row, col) {
         <h3>Select a Plant</h3>
         <button class="btn btn-ghost btn-icon" id="modal-close">✕</button>
       </div>
-      <div class="modal-body">
+      <div style="padding:10px 12px 0">
+        <input class="plant-search" id="modal-search" type="search" placeholder="Search plants…" style="width:100%;margin:0">
+      </div>
+      <div class="modal-body" id="modal-body">
         <div class="modal-grid" id="modal-grid"></div>
       </div>
       <div class="modal-footer">
@@ -437,7 +440,9 @@ function openPlantModal(bedId, row, col) {
     </div>`;
 
   const grid = overlay.querySelector('#modal-grid');
-  for (const plant of PLANTS) {
+  const close = () => document.body.removeChild(overlay);
+
+  function buildPlantBtn(plant) {
     const btn = document.createElement('button');
     btn.className = 'modal-plant-btn';
     if (plant.id === currentPlantId) btn.style.borderColor = 'var(--green)';
@@ -446,23 +451,45 @@ function openPlantModal(bedId, row, col) {
                      <span class="mp-density">${plant.perSqFt}/sq ft</span>`;
     btn.addEventListener('click', () => {
       if (bed) { bed.grid[key] = plant.id; render(); }
-      document.body.removeChild(overlay);
+      close();
     });
-    grid.appendChild(btn);
+    return btn;
   }
 
-  overlay.querySelector('#modal-close').addEventListener('click', () => document.body.removeChild(overlay));
-  overlay.querySelector('#modal-cancel').addEventListener('click', () => document.body.removeChild(overlay));
+  function populateGrid(filter = '') {
+    const q = filter.toLowerCase();
+    const filtered = PLANTS.filter(p =>
+      p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+    );
+    grid.innerHTML = '';
+    if (filtered.length === 0) {
+      grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:16px 0;font-size:0.85rem">No plants match "${escHtml(filter)}"</p>`;
+      return;
+    }
+    for (const plant of filtered) grid.appendChild(buildPlantBtn(plant));
+  }
+
+  populateGrid();
+
+  const searchInput = overlay.querySelector('#modal-search');
+  searchInput.addEventListener('input', e => populateGrid(e.target.value));
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Escape') close();
+  });
+
+  overlay.querySelector('#modal-close').addEventListener('click', close);
+  overlay.querySelector('#modal-cancel').addEventListener('click', close);
   const clearBtn = overlay.querySelector('#modal-clear');
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
       if (bed) { delete bed.grid[key]; render(); }
-      document.body.removeChild(overlay);
+      close();
     });
   }
-  overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
 
   document.body.appendChild(overlay);
+  setTimeout(() => searchInput.focus(), 50);
 }
 
 /* ── Summary rendering ── */
